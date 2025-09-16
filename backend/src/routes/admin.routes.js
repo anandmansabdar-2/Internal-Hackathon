@@ -5,7 +5,9 @@ const { requireAdminAuth } = require("../middlewares/auth");
 
 // Get all issues
 router.get("/report", requireAdminAuth, async (req, res) => {
-  const issues = await reportModel.find().populate("reportedBy", "fullName email");
+  const issues = await reportModel
+    .find()
+    .populate("reportedBy", "fullName email");
   res.json(issues);
 });
 

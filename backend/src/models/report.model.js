@@ -13,6 +13,10 @@ const issueSchema = new mongoose.Schema(
       default: "Reported",
     },
     reportedBy: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
+
+    // 🔹 Phase 4 fields
+    resolvedImageUrl: { type: String }, // photo uploaded when resolved
+    resolvedAt: { type: Date },         // timestamp when issue is resolved
   },
   { timestamps: true }
 );
