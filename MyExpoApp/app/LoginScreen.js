@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert } from 'react-native';
 import { useRouter } from 'expo-router';
+import { useState } from 'react';
+import { Alert, Button, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 
 const LoginScreen = () => {
   const [email, setEmail] = useState('');
@@ -14,8 +14,7 @@ const LoginScreen = () => {
     }
 
     try {
-      // Replace with your actual backend URL
-      const response = await fetch('YOUR_BACKEND_URL/login', {
+      const response = await fetch('https://192.168.31.223:5000/api/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password }),
@@ -59,9 +58,7 @@ const LoginScreen = () => {
           onChangeText={setPassword}
           secureTextEntry
         />
-        <TouchableOpacity style={styles.button} onPress={handleLogin}>
-          <Text style={styles.buttonText}>Login</Text>
-        </TouchableOpacity>
+        <Button title="Login" onPress={handleLogin} color="#6A5ACD" />
         <TouchableOpacity onPress={() => router.push('RegisterScreen')}>
           <Text style={styles.linkText}>Don't have an account? Register</Text>
         </TouchableOpacity>
@@ -110,19 +107,6 @@ const styles = StyleSheet.create({
     marginBottom: 16,
     borderColor: '#E0E0E0',
     borderWidth: 1,
-  },
-  button: {
-    width: '100%',
-    padding: 16,
-    backgroundColor: '#6A5ACD',
-    borderRadius: 8,
-    alignItems: 'center',
-    marginTop: 10,
-  },
-  buttonText: {
-    color: '#fff',
-    fontSize: 18,
-    fontWeight: 'bold',
   },
   linkText: {
     color: '#6A5ACD',

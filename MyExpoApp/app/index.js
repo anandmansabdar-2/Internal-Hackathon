@@ -1,6 +1,6 @@
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
-import { Alert, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { Alert, Button, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 
 const RegisterScreen = () => {
   const [name, setName] = useState('');
@@ -10,10 +10,15 @@ const RegisterScreen = () => {
   const router = useRouter();
 
   const handleRegister = async () => {
+    console.log('1. Button pressed. Starting registration process...');
+
     if (!name || !mobile || !email || !password) {
       Alert.alert('Error', 'Please fill in all fields.');
+      console.log('2. Validation failed. Exiting.');
       return;
     }
+
+    console.log('2. Validation passed. Attempting network request...');
 
     try {
       const response = await fetch('https://192.168.31.223:5000/api/auth/register', {
@@ -22,21 +27,27 @@ const RegisterScreen = () => {
         body: JSON.stringify({ name, mobile, email, password }),
       });
 
+      console.log('3. Network request completed. Checking response...');
+
       if (response.ok) {
+        console.log('4. Response is OK. Registration was successful!');
         Alert.alert('Success', 'Registration successful! You can now log in.');
         router.push('LoginScreen');
+        console.log('5. Navigating to LoginScreen.');
       } else {
         const data = await response.json();
         Alert.alert('Error', data.message || 'Registration failed. Please try again.');
+        console.log('4. Response failed. Message:', data.message);
       }
     } catch (error) {
-      console.error('Registration error:', error);
+      console.log('3. Network request failed. Showing alert.');
       Alert.alert('Error', 'An error occurred. Please check your network connection.');
+      console.error('Network or fetch error:', error);
     }
   };
 
   return (
-    <View style={styles.container}>
+    <ScrollView contentContainerStyle={styles.container}>
       <Text style={styles.title}>Create Account</Text>
       <Text style={styles.subtitle}>Sign up to get started</Text>
       <View style={styles.formContainer}>
@@ -71,20 +82,18 @@ const RegisterScreen = () => {
           onChangeText={setPassword}
           secureTextEntry
         />
-        <TouchableOpacity style={styles.button} onPress={handleRegister}>
-          <Text style={styles.buttonText}>Register</Text>
-        </TouchableOpacity>
+        <Button title="Register" onPress={handleRegister} color="#6A5ACD" />
         <TouchableOpacity onPress={() => router.push('LoginScreen')}>
           <Text style={styles.linkText}>Already have an account? Login</Text>
         </TouchableOpacity>
       </View>
-    </View>
+    </ScrollView>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
+    flexGrow: 1,
     justifyContent: 'center',
     alignItems: 'center',
     backgroundColor: '#F7F9FC',
@@ -122,19 +131,6 @@ const styles = StyleSheet.create({
     marginBottom: 16,
     borderColor: '#E0E0E0',
     borderWidth: 1,
-  },
-  button: {
-    width: '100%',
-    padding: 16,
-    backgroundColor: '#6A5ACD',
-    borderRadius: 8,
-    alignItems: 'center',
-    marginTop: 10,
-  },
-  buttonText: {
-    color: '#fff',
-    fontSize: 18,
-    fontWeight: 'bold',
   },
   linkText: {
     color: '#6A5ACD',

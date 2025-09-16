@@ -1,32 +1,72 @@
-// app/DashboardScreen.js
 import * as ImagePicker from 'expo-image-picker';
 import * as Location from 'expo-location';
-import { useLocalSearchParams } from 'expo-router'; // Correct hook for parsing params
+import { useLocalSearchParams } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { Button, Image, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Alert, Image, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 
 const DashboardScreen = () => {
   const params = useLocalSearchParams();
-  const user = JSON.parse(params.user); // Parse the user data back into an object
-
+  const user = JSON.parse(params.user);
+  
   const [issueDescription, setIssueDescription] = useState('');
   const [image, setImage] = useState(null);
   const [location, setLocation] = useState(null);
+  const [locationName, setLocationName] = useState('Get Location');
 
   useEffect(() => {
+    // Request permissions on component mount
     (async () => {
       const { status: imageStatus } = await ImagePicker.requestMediaLibraryPermissionsAsync();
       const { status: locationStatus } = await Location.requestForegroundPermissionsAsync();
-
-      if (imageStatus !== 'granted' || locationStatus !== 'granted') {
-        alert('Permission to access media library or location is required!');
+  
+      if (imageStatus !== 'granted') {
+        Alert.alert('Permission required', 'Permission to access media library is required to add photos!');
+      }
+      if (locationStatus !== 'granted') {
+        Alert.alert('Permission required', 'Permission to access location is required to get your location!');
       }
     })();
   }, []);
 
-  const pickImage = async () => { /* ...image picker logic... */ };
-  const getLocation = async () => { /* ...location logic... */ };
+  const pickImage = async () => {
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      aspect: [4, 3],
+      quality: 1,
+    });
+
+    if (!result.canceled) {
+      setImage(result.assets[0].uri);
+    }
+  };
+
+  const getLocation = async () => {
+    try {
+      setLocationName('Getting location...');
+      let loc = await Location.getCurrentPositionAsync({});
+      setLocation({
+        latitude: loc.coords.latitude,
+        longitude: loc.coords.longitude,
+      });
+      const geocode = await Location.reverseGeocodeAsync({
+        latitude: loc.coords.latitude,
+        longitude: loc.coords.longitude
+      });
+      setLocationName(geocode[0].city || "Location Found");
+    } catch (error) {
+      setLocationName('Get Location');
+      Alert.alert('Error', 'Could not get location. Please try again.');
+    }
+  };
+
   const handleSubmit = async () => {
+    if (!issueDescription || !image || !location) {
+        Alert.alert("Error", "Please fill in all details (description, photo, and location).");
+        return;
+    }
+    
+    // Prepare data and send to backend
     const reportData = {
       user: user,
       description: issueDescription,
@@ -42,15 +82,17 @@ const DashboardScreen = () => {
       });
 
       if (response.ok) {
-        alert('Issue reported successfully!');
+        Alert.alert('Success', 'Issue reported successfully!');
         setIssueDescription('');
         setImage(null);
+        setLocation(null);
+        setLocationName('Get Location');
       } else {
-        alert('Failed to submit issue.');
+        Alert.alert('Error', 'Failed to submit issue.');
       }
     } catch (error) {
       console.error('Error submitting report:', error);
-      alert('An error occurred. Please try again.');
+      Alert.alert('Error', 'An error occurred. Please try again.');
     }
   };
 
@@ -65,11 +107,19 @@ const DashboardScreen = () => {
           value={issueDescription}
           onChangeText={setIssueDescription}
         />
-        <Button title="Add Picture" onPress={pickImage} />
+        
+        <TouchableOpacity style={styles.button} onPress={pickImage}>
+            <Text style={styles.buttonText}>Add Picture</Text>
+        </TouchableOpacity>
         {image && <Image source={{ uri: image }} style={styles.image} />}
-        <Button title="Get Location" onPress={getLocation} />
-        {location && <Text>Location: {location.latitude}, {location.longitude}</Text>}
-        <Button title="Submit Report" onPress={handleSubmit} />
+        
+        <TouchableOpacity style={styles.button} onPress={getLocation}>
+            <Text style={styles.buttonText}>{locationName}</Text>
+        </TouchableOpacity>
+        
+        <TouchableOpacity style={styles.submitButton} onPress={handleSubmit}>
+            <Text style={styles.submitButtonText}>Submit Report</Text>
+        </TouchableOpacity>
       </View>
     </View>
   );
@@ -105,12 +155,34 @@ const styles = StyleSheet.create({
     marginBottom: 10,
     textAlignVertical: 'top',
   },
+  button: {
+    backgroundColor: '#6A5ACD',
+    padding: 15,
+    borderRadius: 5,
+    alignItems: 'center',
+    marginBottom: 10,
+  },
+  buttonText: {
+    color: 'white',
+    fontWeight: 'bold',
+  },
   image: {
     width: '100%',
     height: 200,
     marginTop: 10,
     marginBottom: 10,
     resizeMode: 'contain',
+  },
+  submitButton: {
+    backgroundColor: 'green',
+    padding: 15,
+    borderRadius: 5,
+    alignItems: 'center',
+    marginTop: 20,
+  },
+  submitButtonText: {
+    color: 'white',
+    fontWeight: 'bold',
   },
 });
 
